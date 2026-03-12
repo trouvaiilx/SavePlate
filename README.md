@@ -1,2 +1,2 @@
-BIT206 - Software Engineering Principles
+BIT216 - Software Engineering Principles
 
