@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+
+@layer base {
+  :root {
+    --background: 45 20% 98%;
+    --foreground: 140 12% 8%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 140 12% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 140 12% 8%;
+
+    --primary: 152 45% 28%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 140 15% 93%;
+    --secondary-foreground: 140 12% 15%;
+
+    --muted: 140 12% 95%;
+    --muted-foreground: 140 8% 46%;
+
+    --accent: 36 88% 52%;
+    --accent-foreground: 36 60% 12%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 140 10% 87%;
+    --input: 140 10% 87%;
+    --ring: 152 45% 28%;
+
+    --radius: 0.25rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3 {
+    font-family: Georgia, Cambria, serif;
+    @apply tracking-tight;
+  }
+
+  h4, h5, h6 {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    @apply font-semibold;
+  }
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23166534' fill-opacity='0.018'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(140 10% 80%); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(140 10% 65%); }
