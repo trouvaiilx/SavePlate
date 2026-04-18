@@ -54,7 +54,6 @@ export default function Login() {
             Track your household food, catch items before they expire, and share what you can't use.
           </p>
         </div>
-        <p className="text-white/30 text-xs">BIT216 · HELP University · 2026</p>
       </div>
 
       <div className="flex-1 flex items-center justify-center p-8">
