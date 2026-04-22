@@ -8,6 +8,14 @@ const CATEGORIES = ['Canned','Frozen','Dry Goods','Vegetables','Fruits','Dairy',
 const STORAGE    = ['Fridge','Freezer','Pantry','Counter','Cupboard','Other'];
 const EMPTY = { item_name:'', quantity:'', unit:'', expiry_date:'', category:'', storage_location:'', remarks:'' };
 
+const Field = ({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) => (
+  <div>
+    <label className="block text-xs font-semibold uppercase tracking-wide mb-1">{label}</label>
+    {children}
+    {error && <p className="text-xs text-red-600 mt-0.5">{error}</p>}
+  </div>
+);
+
 export default function FoodInventory() {
   const { user } = useAuth();
   const [items, setItems]         = useState<FoodItem[]>([]);
@@ -75,14 +83,6 @@ export default function FoodInventory() {
 
   const filtered = items.filter(i => tab === 'active' ? (i.status === 'active' || i.status === 'reserved') : i.status === tab);
   const expiringCount = items.filter(i => i.status === 'active' && daysUntilExpiry(i.expiry_date) <= 3).length;
-
-  const Field = ({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) => (
-    <div>
-      <label className="block text-xs font-semibold uppercase tracking-wide mb-1">{label}</label>
-      {children}
-      {error && <p className="text-xs text-red-600 mt-0.5">{error}</p>}
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-background">
