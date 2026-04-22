@@ -3,6 +3,28 @@ import { useAuth } from '@/context/AuthContext';
 import Navbar from '@/components/Navbar';
 import { Shield, Eye, User, Check } from 'lucide-react';
 
+const Field = ({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) => (
+  <div>
+    <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5">{label}</label>
+    {children}
+    {note && <p className="text-xs text-muted-foreground mt-1">{note}</p>}
+  </div>
+);
+
+const Section = ({ title, icon: Icon, children }: { title: string; icon: React.FC<{size:number;className?:string}>; children: React.ReactNode }) => (
+  <div className="border border-border">
+    <div className="flex items-center gap-2 px-5 py-3.5 border-b border-border bg-muted/30">
+      <Icon size={14} className="text-primary" />
+      <h2 className="text-sm font-semibold">{title}</h2>
+    </div>
+    <div className="px-5 py-5">{children}</div>
+  </div>
+);
+
+const SavedBadge = ({ k, saved }: { k: string, saved: string }) => saved === k
+  ? <span className="inline-flex items-center gap-1 text-xs text-emerald-700 font-medium"><Check size={11}/>Saved</span>
+  : null;
+
 export default function AccountSettings() {
   const { user, updateUser } = useAuth();
   const [name, setName]           = useState(user?.full_name || '');
@@ -21,28 +43,6 @@ export default function AccountSettings() {
   const toggle2FA = (val: boolean) => { setTwoFA(val); updateUser({ is_2fa_enabled: val }); flash('2fa'); };
 
   const savePrivacy = () => { updateUser({ food_visibility: visibility }); flash('privacy'); };
-
-  const Section = ({ title, icon: Icon, children }: { title: string; icon: React.FC<{size:number;className?:string}>; children: React.ReactNode }) => (
-    <div className="border border-border">
-      <div className="flex items-center gap-2 px-5 py-3.5 border-b border-border bg-muted/30">
-        <Icon size={14} className="text-primary" />
-        <h2 className="text-sm font-semibold">{title}</h2>
-      </div>
-      <div className="px-5 py-5">{children}</div>
-    </div>
-  );
-
-  const Field = ({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) => (
-    <div>
-      <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5">{label}</label>
-      {children}
-      {note && <p className="text-xs text-muted-foreground mt-1">{note}</p>}
-    </div>
-  );
-
-  const SavedBadge = ({ k }: { k: string }) => saved === k
-    ? <span className="inline-flex items-center gap-1 text-xs text-emerald-700 font-medium"><Check size={11}/>Saved</span>
-    : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,7 +75,7 @@ export default function AccountSettings() {
                 className="h-8 px-4 bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors">
                 Save Profile
               </button>
-              <SavedBadge k="profile" />
+              <SavedBadge k="profile" saved={saved} />
             </div>
           </div>
         </Section>
@@ -99,7 +99,7 @@ export default function AccountSettings() {
                   className={`w-10 h-5 relative flex items-center border transition-colors ${twoFA ? 'bg-primary border-primary' : 'bg-muted border-input'}`}>
                   <span className={`absolute w-3 h-3 bg-white border border-border/50 transition-transform ${twoFA ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
                 </button>
-                <SavedBadge k="2fa" />
+                <SavedBadge k="2fa" saved={saved} />
               </div>
             </div>
             <div className="border-t border-border pt-3">
@@ -134,7 +134,7 @@ export default function AccountSettings() {
                 className="h-8 px-4 bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors">
                 Save Privacy
               </button>
-              <SavedBadge k="privacy" />
+              <SavedBadge k="privacy" saved={saved} />
             </div>
           </div>
         </Section>
