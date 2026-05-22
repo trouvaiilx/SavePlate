@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Check, X } from 'lucide-react';
+import { api } from '@/lib/api';
 
 const PW_RULES = [
   { label: '8+ characters',     test: (p: string) => p.length >= 8 },
   { label: 'Uppercase letter',  test: (p: string) => /[A-Z]/.test(p) },
   { label: 'Number',            test: (p: string) => /\d/.test(p) },
-  { label: 'Special character', test: (p: string) => /[!@#$%^&*]/.test(p) },
+  { label: 'Special character', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
 ];
 
 export default function Register() {
@@ -35,18 +36,22 @@ export default function Register() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    await new Promise(r => setTimeout(r, 600));
-    const users = JSON.parse(localStorage.getItem('sp_users') || '[]');
-    if (users.find((u: { email: string }) => u.email === form.email.toLowerCase())) {
-      setApiError('This email is already registered.'); setLoading(false); return;
+    try {
+      await api('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          full_name: form.full_name.trim(),
+          email: form.email.toLowerCase(),
+          password: form.password,
+          household_size: form.household_size ? parseInt(form.household_size) : null
+        })
+      });
+      setLoading(false);
+      navigate('/verify-email', { state: { email: form.email.toLowerCase() } });
+    } catch (err: any) {
+      setApiError(err.message || 'Registration failed');
+      setLoading(false);
     }
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const newUser = { id: Date.now(), full_name: form.full_name.trim(), email: form.email.toLowerCase(), password: form.password, household_size: form.household_size ? parseInt(form.household_size) : null, is_2fa_enabled: false, food_visibility: 'private', is_verified: false };
-    users.push(newUser);
-    localStorage.setItem('sp_users', JSON.stringify(users));
-    localStorage.setItem('sp_pending_verification', JSON.stringify({ email: newUser.email, code, expires_at: Date.now() + 600000 }));
-    setLoading(false);
-    navigate('/verify-email', { state: { email: newUser.email, code } });
   };
 
   const pwOk = PW_RULES.map(r => r.test(form.password));
