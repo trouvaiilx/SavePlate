@@ -1,18 +1,19 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
 import {
   LayoutDashboard, Package, Search, Bell, BarChart2,
   UtensilsCrossed, LogOut, Settings, Menu, X,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const navLinks = [
   { to: '/dashboard',     label: 'Dashboard',   icon: LayoutDashboard },
   { to: '/inventory',     label: 'Inventory',   icon: Package },
   { to: '/browse',        label: 'Browse',      icon: Search },
-  { to: '/notifications', label: 'Alerts',      icon: Bell },
-  { to: '/analytics',     label: 'Analytics',   icon: BarChart2 },
   { to: '/meals',         label: 'Meal Plan',   icon: UtensilsCrossed },
+  { to: '/analytics',     label: 'Analytics',   icon: BarChart2 },
+  { to: '/notifications', label: 'Alerts',      icon: Bell },
 ];
 
 export default function Navbar() {
@@ -20,6 +21,27 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch unread notification count
+  const fetchUnread = useCallback(async () => {
+    try {
+      const data = await api('/notifications');
+      setUnreadCount(Array.isArray(data) ? data.filter((n: any) => !n.is_read).length : 0);
+    } catch { /* silent */ }
+  }, []);
+
+  // Poll every 30s
+  useEffect(() => {
+    fetchUnread();
+    const id = setInterval(fetchUnread, 30_000);
+    return () => clearInterval(id);
+  }, [fetchUnread]);
+
+  // Re-fetch when navigating away from notifications (user may have read them)
+  useEffect(() => {
+    if (location.pathname !== '/notifications') fetchUnread();
+  }, [location.pathname, fetchUnread]);
 
   // Close drawer on route change
   useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
@@ -49,16 +71,22 @@ export default function Navbar() {
           <nav className="hidden sm:flex items-stretch h-12 gap-0 flex-1 ml-8 overflow-x-auto">
             {navLinks.map(({ to, label, icon: Icon }) => {
               const active = location.pathname === to;
+              const isAlerts = to === '/notifications';
               return (
                 <Link key={to} to={to}
                   className={[
-                    'flex items-center gap-1.5 px-3 text-[13px] font-medium border-b-2 whitespace-nowrap transition-colors',
+                    'relative flex items-center gap-1.5 px-3 text-[13px] font-medium border-b-2 whitespace-nowrap transition-colors',
                     active
                       ? 'border-primary text-primary'
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border',
                   ].join(' ')}>
                   <Icon size={13} />
                   {label}
+                  {isAlerts && unreadCount > 0 && (
+                    <span className="ml-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full leading-none">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -80,11 +108,27 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* Mobile: initials + hamburger */}
-          <div className="sm:hidden flex items-center gap-2 ml-auto">
+          {/* Mobile: initials + bell + hamburger */}
+          <div className="sm:hidden flex items-center gap-1 ml-auto">
             <span className="w-7 h-7 bg-primary/10 text-primary text-[11px] font-bold flex items-center justify-center">
               {initials}
             </span>
+            <button
+              onClick={() => navigate('/notifications')}
+              className={[
+                'relative w-9 h-9 flex items-center justify-center transition-colors',
+                location.pathname === '/notifications'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground',
+              ].join(' ')}
+              aria-label="Notifications">
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full leading-none">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
             <button
               onClick={() => setDrawerOpen(v => !v)}
               className="w-9 h-9 flex items-center justify-center text-foreground"
@@ -123,6 +167,7 @@ export default function Navbar() {
         <nav className="py-1">
           {navLinks.map(({ to, label, icon: Icon }) => {
             const active = location.pathname === to;
+            const isAlerts = to === '/notifications';
             return (
               <Link key={to} to={to}
                 className={[
@@ -133,6 +178,11 @@ export default function Navbar() {
                 ].join(' ')}>
                 <Icon size={16} className={active ? 'text-primary' : 'text-muted-foreground'} />
                 {label}
+                {isAlerts && unreadCount > 0 && (
+                  <span className="ml-auto min-w-[20px] h-[20px] px-1 flex items-center justify-center bg-red-500 text-white text-[11px] font-bold rounded-full leading-none">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </Link>
             );
           })}
