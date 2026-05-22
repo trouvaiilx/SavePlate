@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import Navbar from '@/components/Navbar';
-import { getFoodItems, addFoodItem, updateFoodItem, deleteFoodItem, addDonation, daysUntilExpiry, expiryLabel, type FoodItem } from '@/lib/store';
-import { Plus, Pencil, Trash2, HeartHandshake, CheckCircle, AlertTriangle, Package, X, ChevronRight } from 'lucide-react';
+import { api } from '@/lib/api';
+import { daysUntilExpiry, expiryLabel, type FoodItem } from '@/lib/store';
+import { Plus, Pencil, Trash2, HeartHandshake, CheckCircle, AlertTriangle, Package, X, Loader2 } from 'lucide-react';
 
 const CATEGORIES = ['Canned','Frozen','Dry Goods','Vegetables','Fruits','Dairy','Meat','Bakery','Beverages','Other'];
 const STORAGE    = ['Fridge','Freezer','Pantry','Counter','Cupboard','Other'];
@@ -19,6 +20,7 @@ const Field = ({ label, error, children }: { label: string; error?: string; chil
 export default function FoodInventory() {
   const { user } = useAuth();
   const [items, setItems]           = useState<FoodItem[]>([]);
+  const [loading, setLoading]       = useState(true);
   const [tab, setTab]               = useState<'active'|'used'|'donated'>('active');
   const [formOpen, setFormOpen]     = useState(false);
   const [editItem, setEditItem]     = useState<FoodItem | null>(null);
@@ -29,8 +31,18 @@ export default function FoodInventory() {
   const [donateForm, setDonateForm] = useState({ pickup_location:'', availability:'' });
   const [donateErr, setDonateErr]   = useState('');
   const [toast, setToast]           = useState('');
+  const [saving, setSaving]         = useState(false);
 
-  const reload = () => setItems(getFoodItems(user!.id));
+  const reload = async () => {
+    try {
+      const data = await api('/food');
+      setItems(data);
+    } catch (e) {
+      showToast('Error loading inventory.');
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => { reload(); }, []);
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
@@ -46,13 +58,33 @@ export default function FoodInventory() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateForm()) return;
-    const payload = { user_id: user!.id, item_name: form.item_name.trim(), quantity: parseFloat(form.quantity), unit: form.unit.trim(), expiry_date: form.expiry_date, category: form.category, storage_location: form.storage_location, remarks: form.remarks, status: 'active' as const, reserved_qty: 0 };
-    if (editItem) { updateFoodItem(editItem.food_id, payload); showToast('Item updated.'); }
-    else          { addFoodItem(payload); showToast('Item added to inventory.'); }
-    setFormOpen(false); setEditItem(null); setForm(EMPTY); setFormErrors({});
-    reload();
+    setSaving(true);
+    const payload = {
+      item_name: form.item_name.trim(),
+      quantity: parseFloat(form.quantity),
+      unit: form.unit.trim(),
+      expiry_date: form.expiry_date,
+      category: form.category,
+      storage_location: form.storage_location || null,
+      remarks: form.remarks || null,
+    };
+    try {
+      if (editItem) {
+        await api(`/food/${editItem.food_id}`, { method: 'PUT', body: JSON.stringify(payload) });
+        showToast('Item updated.');
+      } else {
+        await api('/food', { method: 'POST', body: JSON.stringify(payload) });
+        showToast('Item added to inventory.');
+      }
+      setFormOpen(false); setEditItem(null); setForm(EMPTY); setFormErrors({});
+      reload();
+    } catch (e: any) {
+      showToast(e.message || 'Error saving item.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const openEdit = (item: FoodItem) => {
@@ -62,22 +94,49 @@ export default function FoodInventory() {
     setFormOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteItem) return;
-    deleteFoodItem(deleteItem.food_id); setDeleteItem(null); reload(); showToast('Item removed.');
+    try {
+      await api(`/food/${deleteItem.food_id}`, { method: 'DELETE' });
+      setDeleteItem(null);
+      reload();
+      showToast('Item removed.');
+    } catch (e: any) {
+      showToast(e.message || 'Error deleting item.');
+    }
   };
 
-  const handleMarkUsed = (item: FoodItem) => {
-    updateFoodItem(item.food_id, { status: 'used' }); reload(); showToast(`"${item.item_name}" marked as used.`);
+  const handleMarkUsed = async (item: FoodItem) => {
+    try {
+      await api(`/food/${item.food_id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'used' }),
+      });
+      reload();
+      showToast(`"${item.item_name}" marked as used.`);
+    } catch (e: any) {
+      showToast(e.message || 'Error updating item.');
+    }
   };
 
-  const handleDonate = () => {
+  const handleDonate = async () => {
     if (!donateForm.pickup_location.trim()) { setDonateErr('Pickup location is required.'); return; }
     if (!donateItem) return;
-    updateFoodItem(donateItem.food_id, { status: 'donated' });
-    addDonation({ food_id: donateItem.food_id, donor_id: user!.id, donor_name: user!.full_name, food_name: donateItem.item_name, food_category: donateItem.category, expiry_date: donateItem.expiry_date, pickup_location: donateForm.pickup_location, availability: donateForm.availability, status: 'available' });
-    setDonateItem(null); setDonateForm({ pickup_location:'', availability:'' }); setDonateErr('');
-    reload(); showToast(`"${donateItem.item_name}" listed for donation.`);
+    try {
+      await api('/donations', {
+        method: 'POST',
+        body: JSON.stringify({
+          food_id: donateItem.food_id,
+          pickup_location: donateForm.pickup_location,
+          availability: donateForm.availability,
+        }),
+      });
+      setDonateItem(null); setDonateForm({ pickup_location:'', availability:'' }); setDonateErr('');
+      reload();
+      showToast(`"${donateItem.item_name}" listed for donation.`);
+    } catch (e: any) {
+      showToast(e.message || 'Error creating donation.');
+    }
   };
 
   const filtered = items.filter(i => tab === 'active' ? (i.status === 'active' || i.status === 'reserved') : i.status === tab);
@@ -132,8 +191,12 @@ export default function FoodInventory() {
           ))}
         </div>
 
-        {/* Items */}
-        {filtered.length === 0 ? (
+        {/* Loading */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={24} className="animate-spin text-muted-foreground" />
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="border border-border py-16 text-center">
             <Package size={28} className="text-muted-foreground mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">No {tab} items.</p>
@@ -285,9 +348,9 @@ export default function FoodInventory() {
             <div className="px-5 py-4 border-t border-border flex gap-2 shrink-0">
               <button onClick={() => { setFormOpen(false); setEditItem(null); }}
                 className="flex-1 h-11 text-sm border border-input hover:bg-muted transition-colors">Cancel</button>
-              <button onClick={handleSave}
-                className="flex-1 h-11 text-sm bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors">
-                {editItem ? 'Save Changes' : 'Add Item'}
+              <button onClick={handleSave} disabled={saving}
+                className="flex-1 h-11 text-sm bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60">
+                {saving ? 'Saving…' : editItem ? 'Save Changes' : 'Add Item'}
               </button>
             </div>
           </div>

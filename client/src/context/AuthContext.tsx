@@ -59,9 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const updated = { ...user, ...updates };
     setUser(updated);
     localStorage.setItem('sp_user', JSON.stringify(updated));
-    const users = JSON.parse(localStorage.getItem('sp_users') || '[]');
-    const idx = users.findIndex((u: User & { password: string }) => u.id === user.id);
-    if (idx !== -1) { users[idx] = { ...users[idx], ...updates }; localStorage.setItem('sp_users', JSON.stringify(users)); }
   };
 
   return (
