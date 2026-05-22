@@ -8,7 +8,11 @@ import Dashboard from '@/pages/Dashboard';
 import AccountSettings from '@/pages/AccountSettings';
 import FoodInventory from '@/pages/FoodInventory';
 import BrowseFood from '@/pages/BrowseFood';
-import { Notifications, Analytics, MealPlan } from '@/pages/StubPages';
+import Notifications from '@/pages/Notifications';
+import Analytics from '@/pages/Analytics';
+import MealPlan from '@/pages/MealPlan';
+
+import NotFound from '@/pages/NotFound';
 
 export default function App() {
   return (
@@ -25,7 +29,7 @@ export default function App() {
           <Route path="/notifications"  element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/analytics"      element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
           <Route path="/meals"          element={<ProtectedRoute><MealPlan /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
