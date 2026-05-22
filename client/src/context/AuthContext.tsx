@@ -21,25 +21,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const seedDemoData = () => {
-  if (!localStorage.getItem('sp_users')) {
-    localStorage.setItem('sp_users', JSON.stringify([{
-      id: 1, full_name: 'Demo User', email: 'demo@saveplate.my',
-      password: 'Demo1234!', household_size: 4,
-      is_2fa_enabled: false, food_visibility: 'public', is_verified: true,
-    }]));
-  }
-};
+import { api } from '@/lib/api';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const u = localStorage.getItem('sp_user');
+    return u ? JSON.parse(u) : null;
+  });
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('sp_token'));
 
   useEffect(() => {
-    seedDemoData();
-    const u = localStorage.getItem('sp_user');
-    const t = localStorage.getItem('sp_token');
-    if (u && t) { setUser(JSON.parse(u)); setToken(t); }
+    if (token) {
+      api('/auth/me')
+        .then(data => setUser(data))
+        .catch((err: Error & { status?: number }) => {
+          // Only logout on 401 (truly unauthorized / expired token).
+          // For rate-limit (429) or network errors, keep the cached session.
+          if (err.status === 401) logout();
+        });
+    }
   }, []);
 
   const login = (user: User, token: string) => {
