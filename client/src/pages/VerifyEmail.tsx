@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { api } from '@/lib/api';
 import { CheckCircle, Mail } from 'lucide-react';
 
 export default function VerifyEmail() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { email, code: demoCode } = (location.state as { email: string; code: string }) || {};
+  const { email } = (location.state as { email?: string }) || {};
 
   const [digits, setDigits] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
@@ -36,24 +37,33 @@ export default function VerifyEmail() {
     const code = digits.join('');
     if (code.length < 6) { setError('Enter all 6 digits.'); return; }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 500));
-    const pending = JSON.parse(localStorage.getItem('sp_pending_verification') || 'null');
-    if (!pending || pending.email !== email) { setError('Session expired. Please register again.'); setLoading(false); return; }
-    if (Date.now() > pending.expires_at)      { setError('Code expired. Request a new one.'); setLoading(false); return; }
-    if (pending.code !== code)                 { setError('Incorrect code.'); setLoading(false); return; }
-    const users = JSON.parse(localStorage.getItem('sp_users') || '[]');
-    const idx = users.findIndex((u: {email:string}) => u.email === email);
-    if (idx !== -1) { users[idx].is_verified = true; localStorage.setItem('sp_users', JSON.stringify(users)); }
-    localStorage.removeItem('sp_pending_verification');
-    setSuccess(true); setLoading(false);
-    setTimeout(() => navigate('/login', { state: { verified: true } }), 1800);
+    setError('');
+    try {
+      await api('/auth/verify-email', {
+        method: 'POST',
+        body: JSON.stringify({ email, code }),
+      });
+      setSuccess(true);
+      setLoading(false);
+      setTimeout(() => navigate('/login', { state: { verified: true } }), 1800);
+    } catch (err: any) {
+      setError(err.message || 'Verification failed.');
+      setLoading(false);
+    }
   };
 
-  const handleResend = () => {
-    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-    localStorage.setItem('sp_pending_verification', JSON.stringify({ email, code: newCode, expires_at: Date.now() + 600000 }));
-    setDigits(['','','','','','']); setError(''); setCooldown(60);
-    alert(`[DEMO] New code: ${newCode}`);
+  const handleResend = async () => {
+    setError('');
+    try {
+      await api('/auth/resend-code', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      });
+      setDigits(['', '', '', '', '', '']);
+      setCooldown(60);
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend code.');
+    }
   };
 
   if (success) return (
@@ -81,12 +91,6 @@ export default function VerifyEmail() {
             <p className="text-sm text-muted-foreground">Sent a 6-digit code to <strong className="text-foreground">{email}</strong>. Expires in 10 min.</p>
           </div>
         </div>
-
-        {demoCode && (
-          <div className="border-l-2 border-amber-400 bg-amber-50 px-3 py-2 mb-5">
-            <p className="text-xs text-amber-800 font-mono">Demo code: <strong className="text-base tracking-widest">{demoCode}</strong></p>
-          </div>
-        )}
 
         {error && <div className="text-sm text-red-700 border border-red-200 bg-red-50 px-3 py-2 mb-4">{error}</div>}
 

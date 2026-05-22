@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { api } from '@/lib/api';
 import Navbar from '@/components/Navbar';
-import { Shield, Eye, User, Check } from 'lucide-react';
+import { Shield, Eye, User, Check, AlertCircle } from 'lucide-react';
 
 const Field = ({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) => (
   <div>
@@ -31,11 +32,62 @@ export default function AccountSettings() {
   const [twoFA, setTwoFA]             = useState(user?.is_2fa_enabled || false);
   const [visibility, setVisibility]   = useState<'public'|'private'>(user?.food_visibility || 'private');
   const [saved, setSaved]             = useState('');
+  const [error, setError]             = useState('');
+  const [saving, setSaving]           = useState('');
 
   const flash = (key: string) => { setSaved(key); setTimeout(() => setSaved(''), 2500); };
-  const saveProfile = () => { updateUser({ full_name: name.trim(), household_size: hSize ? parseInt(hSize) : undefined }); flash('profile'); };
-  const toggle2FA   = (val: boolean) => { setTwoFA(val); updateUser({ is_2fa_enabled: val }); flash('2fa'); };
-  const savePrivacy = () => { updateUser({ food_visibility: visibility }); flash('privacy'); };
+
+  const saveProfile = async () => {
+    setSaving('profile'); setError('');
+    try {
+      await api('/auth/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          full_name: name.trim(),
+          household_size: hSize ? parseInt(hSize) : null,
+        }),
+      });
+      updateUser({ full_name: name.trim(), household_size: hSize ? parseInt(hSize) : undefined });
+      flash('profile');
+    } catch (e: any) {
+      setError(e.message || 'Failed to save profile.');
+    } finally {
+      setSaving('');
+    }
+  };
+
+  const toggle2FA = async (val: boolean) => {
+    setSaving('2fa'); setError('');
+    try {
+      await api('/auth/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ is_2fa_enabled: val }),
+      });
+      setTwoFA(val);
+      updateUser({ is_2fa_enabled: val });
+      flash('2fa');
+    } catch (e: any) {
+      setError(e.message || 'Failed to update 2FA.');
+    } finally {
+      setSaving('');
+    }
+  };
+
+  const savePrivacy = async () => {
+    setSaving('privacy'); setError('');
+    try {
+      await api('/auth/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ food_visibility: visibility }),
+      });
+      updateUser({ food_visibility: visibility });
+      flash('privacy');
+    } catch (e: any) {
+      setError(e.message || 'Failed to save privacy settings.');
+    } finally {
+      setSaving('');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,6 +98,12 @@ export default function AccountSettings() {
           <h1 className="font-serif text-2xl sm:text-3xl">Account Settings</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your profile, security, and privacy.</p>
         </div>
+
+        {error && (
+          <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 px-3 py-2.5">
+            <AlertCircle size={14} className="shrink-0" /> {error}
+          </div>
+        )}
 
         {/* Profile */}
         <Section title="Profile Information" icon={User}>
@@ -63,9 +121,9 @@ export default function AccountSettings() {
                 className="w-24 h-10 px-2.5 border border-input text-sm focus:outline-none focus:border-primary transition-colors" />
             </Field>
             <div className="flex items-center gap-3 pt-1">
-              <button onClick={saveProfile}
-                className="h-10 px-5 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:bg-primary/80 transition-colors">
-                Save Profile
+              <button onClick={saveProfile} disabled={saving === 'profile'}
+                className="h-10 px-5 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:bg-primary/80 transition-colors disabled:opacity-60">
+                {saving === 'profile' ? 'Saving…' : 'Save Profile'}
               </button>
               <SavedBadge k="profile" saved={saved} />
             </div>
@@ -88,8 +146,8 @@ export default function AccountSettings() {
                   {twoFA ? 'ON' : 'OFF'}
                 </span>
                 {/* Square toggle - intentional, not a pill */}
-                <button onClick={() => toggle2FA(!twoFA)}
-                  className={`w-11 h-6 relative flex items-center border transition-colors ${twoFA ? 'bg-primary border-primary' : 'bg-muted border-input'}`}
+                <button onClick={() => toggle2FA(!twoFA)} disabled={saving === '2fa'}
+                  className={`w-11 h-6 relative flex items-center border transition-colors disabled:opacity-60 ${twoFA ? 'bg-primary border-primary' : 'bg-muted border-input'}`}
                   aria-label={twoFA ? 'Disable 2FA' : 'Enable 2FA'}>
                   <span className={`absolute w-4 h-4 bg-white border border-border/50 transition-transform ${twoFA ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
                 </button>
@@ -123,9 +181,9 @@ export default function AccountSettings() {
               </p>
             </Field>
             <div className="flex items-center gap-3 pt-1">
-              <button onClick={savePrivacy}
-                className="h-10 px-5 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:bg-primary/80 transition-colors">
-                Save Privacy
+              <button onClick={savePrivacy} disabled={saving === 'privacy'}
+                className="h-10 px-5 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 active:bg-primary/80 transition-colors disabled:opacity-60">
+                {saving === 'privacy' ? 'Saving…' : 'Save Privacy'}
               </button>
               <SavedBadge k="privacy" saved={saved} />
             </div>

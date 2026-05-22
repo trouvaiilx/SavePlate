@@ -19,9 +19,10 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/register" element={<Register />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/register"       element={<Register />} />
+          <Route path="/verify-email"   element={<VerifyEmail />} />
+          <Route path="/login"          element={<Login />} />
+          <Route path="/"               element={<Login />} />
           <Route path="/dashboard"      element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/account"        element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
           <Route path="/inventory"      element={<ProtectedRoute><FoodInventory /></ProtectedRoute>} />
@@ -29,7 +30,7 @@ export default function App() {
           <Route path="/notifications"  element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/analytics"      element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
           <Route path="/meals"          element={<ProtectedRoute><MealPlan /></ProtectedRoute>} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="*"               element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
