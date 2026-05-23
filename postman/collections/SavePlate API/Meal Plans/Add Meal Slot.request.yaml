@@ -1,0 +1,23 @@
+$kind: http-request
+name: Add Meal Slot
+method: POST
+url: '{{baseUrl}}/meals/slots'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "week_start": "2026-05-19",
+      "day_index": 0,
+      "meal_type": "breakfast",
+      "meal_name": "Spinach Omelette",
+      "food_ids": [1, 2]
+    }
+order: 3000

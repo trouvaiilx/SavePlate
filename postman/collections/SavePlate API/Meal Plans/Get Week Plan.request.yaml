@@ -1,0 +1,14 @@
+$kind: http-request
+name: Get Week Plan
+method: GET
+url: '{{baseUrl}}/meals'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+queryParams:
+  - key: week_start
+    value: '2026-05-19'
+    disabled: false
+order: 1000

@@ -1,0 +1,23 @@
+$kind: http-request
+name: Get All Food Items
+method: GET
+url: '{{baseUrl}}/food'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+queryParams:
+  - key: status
+    value: active
+    disabled: true
+  - key: category
+    value: Vegetables
+    disabled: true
+  - key: storage_location
+    value: Fridge
+    disabled: true
+  - key: expiry_within
+    value: '7'
+    disabled: true
+order: 1000

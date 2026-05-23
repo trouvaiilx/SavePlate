@@ -1,0 +1,8 @@
+$kind: collection
+name: SavePlate API
+description: |-
+  REST API for SavePlate — a food waste reduction platform.
+  Base URL: {{baseUrl}}
+  
+  Authentication: Bearer token (JWT). Obtain a token via POST /api/auth/login or POST /api/auth/verify-2fa.
+  Add the token to the Authorization header as: Bearer {{token}}

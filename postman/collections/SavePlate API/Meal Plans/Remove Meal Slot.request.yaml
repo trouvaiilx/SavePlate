@@ -1,0 +1,10 @@
+$kind: http-request
+name: Remove Meal Slot
+method: DELETE
+url: '{{baseUrl}}/meals/slots/{{slotId}}'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+order: 4000

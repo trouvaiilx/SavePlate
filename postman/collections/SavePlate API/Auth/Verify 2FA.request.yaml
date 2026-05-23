@@ -1,0 +1,23 @@
+$kind: http-request
+name: Verify 2FA
+method: POST
+url: '{{baseUrl}}/auth/verify-2fa'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "jane@example.com",
+      "code": "123456"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      const data = pm.response.json();
+      if (data.token) {
+        pm.environment.set('token', data.token);
+      }
+order: 5000

@@ -1,0 +1,14 @@
+$kind: http-request
+name: Get Community Donations
+method: GET
+url: '{{baseUrl}}/donations'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+queryParams:
+  - key: category
+    value: Vegetables
+    disabled: true
+order: 1000

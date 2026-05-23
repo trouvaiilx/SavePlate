@@ -1,0 +1,21 @@
+$kind: http-request
+name: Create Donation
+method: POST
+url: '{{baseUrl}}/donations'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "food_id": 1,
+      "pickup_location": "123 Main St, Apt 4B",
+      "availability": "Weekdays 9am-5pm"
+    }
+order: 3000

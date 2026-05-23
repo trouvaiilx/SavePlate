@@ -1,0 +1,19 @@
+$kind: http-request
+name: Update Food Item Status
+method: PATCH
+url: '{{baseUrl}}/food/{{foodId}}/status'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "used"
+    }
+order: 5000

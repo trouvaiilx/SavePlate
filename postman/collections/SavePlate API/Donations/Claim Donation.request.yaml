@@ -1,0 +1,10 @@
+$kind: http-request
+name: Claim Donation
+method: PATCH
+url: '{{baseUrl}}/donations/{{donationId}}/claim'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+order: 4000

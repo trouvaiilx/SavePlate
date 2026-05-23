@@ -1,0 +1,22 @@
+$kind: http-request
+name: Update Settings
+method: PATCH
+url: '{{baseUrl}}/auth/settings'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "full_name": "Jane Doe",
+      "household_size": 3,
+      "is_2fa_enabled": false,
+      "food_visibility": "public"
+    }
+order: 7000

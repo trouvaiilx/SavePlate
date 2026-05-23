@@ -1,0 +1,14 @@
+$kind: http-request
+name: Get Stats
+method: GET
+url: '{{baseUrl}}/analytics'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+queryParams:
+  - key: range
+    value: '30'
+    disabled: true
+order: 1000

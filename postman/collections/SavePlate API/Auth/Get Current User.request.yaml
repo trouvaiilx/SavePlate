@@ -1,0 +1,10 @@
+$kind: http-request
+name: Get Current User
+method: GET
+url: '{{baseUrl}}/auth/me'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+order: 6000

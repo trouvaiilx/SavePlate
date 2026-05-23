@@ -1,0 +1,14 @@
+$kind: http-request
+name: Get Meal Suggestions
+method: GET
+url: '{{baseUrl}}/meals/suggestions'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+queryParams:
+  - key: limit
+    value: '5'
+    disabled: true
+order: 2000
