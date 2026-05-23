@@ -26,6 +26,14 @@ const sendVerificationEmail = async (toEmail, fullName, code, is2FA = false) => 
     ? 'Use the 6-digit code below to log in to your account.' 
     : 'Use the 6-digit code below to verify your email address.';
 
+  // Print code to console for local development testing
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`\n=================================================`);
+    console.log(`DEVELOPMENT MODE: Email sent to ${toEmail}`);
+    console.log(`Verification Code: ${code}`);
+    console.log(`=================================================\n`);
+  }
+
   await transporter.sendMail({
     from,
     to: toEmail,
