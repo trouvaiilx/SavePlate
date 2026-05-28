@@ -1,0 +1,38 @@
+$kind: http-request
+name: Get Stats (7 Days Empty)
+method: GET
+url: '{{baseUrl}}/analytics'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+queryParams:
+  - key: range
+    value: '7'
+    disabled: false
+events:
+  - listen: test
+    script:
+      type: text/javascript
+      exec:
+        - 'pm.test("Status code is 200", function () {'
+        - '    pm.response.to.have.status(200);'
+        - '});'
+        - ''
+        - '// TC-4.2.3: Summary stats show zero values for saved and donated'
+        - 'pm.test("Summary stats show zero values for saved and donated", function () {'
+        - '    var jsonData = pm.response.json();'
+        - '    pm.expect(jsonData.summary.total_saved).to.eql(0);'
+        - '    pm.expect(jsonData.summary.total_donated).to.eql(0);'
+        - '});'
+        - ''
+        - '// TC-4.2.3: API returns 200 with empty arrays for by_category'
+        - 'pm.test("API returns empty array for by_category", function () {'
+        - '    var jsonData = pm.response.json();'
+        - '    pm.expect(jsonData.by_category).to.be.an("array").that.is.empty;'
+        - '});'
+        - ''
+        - '// Note: UI expectations (Charts display empty state, Message prompts user...) '
+        - '// should be validated in your frontend tests or manually.'
+order: 1001
